@@ -108,7 +108,8 @@ select "application/json" for the content type, set a secret if you're using
 one.
 
 Under the choices of events to receive, select individual events and check
-"Pull Request," "Issue comment" and "Pull Request review comment."
+"Commit comment," "Pull Request," "Issue comment" and "Pull Request review
+comment."
 
 How it works
 ------------
