@@ -106,7 +106,7 @@ select "application/json" for the content type, set a secret if you're using
 one.
 
 Under the choices of events to receive, select individual events and check
-"Pull Request," "Issue comment" and "PUll Request review comment."
+"Pull Request," "Issue comment" and "Pull Request review comment."
 
 How it works
 ------------
@@ -123,10 +123,11 @@ that kinda sucks.
 
 There is currently no way to receive push notifications for events on a
 repository that you do not own. To work around this, whenever a push request
-open event is received by the web hook, an entry for the pull request will be
-added to the shared database. When the cron job runs, it uses the github API
-to get a list of all commits for the known pull requests, and all comments on
-these commits. Any new comments will be forwarded to the $GHEH_EMAIL_TO.
+open or synchronize event is received by the web hook, an entry for the pull
+request will be added to the shared database with a list of the commits in the
+pull request. When the cron job runs, it uses the github API to get a list of
+the comments on these commits. Any new comments will be forwarded to the
+$GHEH_EMAIL_TO address.
 
 The cron job makes uses of the ETag HTTP header to avoid retrieving data that
 has not changed since the last API call. API calls that return a 304 do not
