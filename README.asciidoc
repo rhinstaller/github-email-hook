@@ -1,0 +1,139 @@
+github-email-hook - Tools for forwarding pull requests to a mailing list
+========================================================================
+David Shea <dshea@redhat.com>
+
+This project provides tools for copying pull requests and patch comments to a
+mailing list or other email address. This can be useful for integrating github
+with an email-based workflow. Also, there are so, so many ways to comment on a
+pull request, and sometimes it's nice to have all of that data in one place.
+
+The pieces, broadly, are:
+
+  - A web service to receive push notifications about your repo from github
+
+  - A cron job to poll for comments in repos involved in a pull request
+
+  - A database to store state information for the cron job
+
+How to use it
+-------------
+
+The platform
+~~~~~~~~~~~~
+
+You will need some kind of thing that can host a python web application and
+mongoDB and be able to run cron jobs. I can't help you with the details. You
+must search within for the answers.
+
+wsgi.py implements the webhook. It's designed in particular for use with
+mod_wsgi, but there's a main block to facilitate use as a standalone
+application and that will probably work ok.
+
+cronjob.py implements the comment polling. It should be run periodically. Once
+an hour? I run mine once an hour.
+
+The web hook must be running somewhere with a publicly-accessible URL.
+
+The environment
+~~~~~~~~~~~~~~~
+
+This service uses several environment variables for its configuration.
+Specifically, the following environment variables.
+
+Required
+^^^^^^^^
+
+*GHEH_SMTP_SERVER*:: Your email server
+
+*GHEH_EMAIL_TO*:: Where to send emails
+
+*GHEH_EMAIL_FROM*:: Whom to pretend to be when sending emails
+
+*GHEH_DB_ENVVAR*:: The environment variable containing the MongoDB URL. The
+		   extra layer of indirection is because of services like
+		   OpenShift that set the URL in an environment variable. So
+		   for OpenShift set GHEH_DB_ENVVAR to
+		   OPENSHIFT_MONGODB_DB_URL.
+
+Optional
+^^^^^^^^
+
+*GHEH_SMTP_USER*:: The user name for your SMTP server, if a login is required
+
+*GHEH_SMTP_PASSWORD*:: The password for your SMTP server, if a login is required
+
+*GHEH_SMTP_TLS*:: Set to 1 to use STARTTLS with the SMTP server.
+
+*GHEH_SMTP_PORT*:: The SMTP port. By default, 25 will be used if GHEH_SMTP_TLS
+                   is not set, or 587 if it is set.
+
+*GHEH_EMAIL_APPROVED*:: A string to add to the Approved header in all of the
+			emails. Depending on your mail server configuration,
+			this may make your life easier.
+
+*GHEH_GITHUB_SECRET*:: *Recommended* If set, this is the secret used to
+                       configure the webhook on github, and is used to verify
+		       that push events are sent from github.
+
+*GHEH_GITHUB_OAUTH*:: *Highly recommended!* If set, this is used to
+                      authenticate github API requests as your github user.
+		      Doing so increases the rate limit set by github from 60
+		      requests per hour to 5000, so for real, set this.
+		      Instructions for obtaining an OAuth token are provided
+		      below.
+
+*GHEH_HTTP_PORT*:: The HTTP port to listen on if running the webhook as a
+                   standalone service.
+
+On github
+~~~~~~~~~
+
+OAuth
+^^^^^
+
+To get an OAuth token for this app, go to the "Applications" tab in your user
+settings on github. There will be a section for "Personal access tokens" and a
+button to generate a new token. Generate a new token. Uncheck all of the
+scopes. Fill in the description with something descriptive. Copy the generated
+token into your GHEH_GITHUB_OAUTH environment variable.
+
+Webhook
+^^^^^^^
+
+Go to the settings for the repository you want to connect to email. Under
+"Webhooks & Services," add a webhook. Put in the URL for the web service,
+select "application/json" for the content type, set a secret if you're using
+one.
+
+Under the choices of events to receive, select individual events and check
+"Pull Request," "Issue comment" and "PUll Request review comment."
+
+How it works
+------------
+
+Github can, through the web hook interface, send data for certain events
+related to a repository to a URL via HTTP POST. These events, however, do not
+include comments made on commits within a pull request, because these commits,
+and hence the comments on them, are part of the repository being pulled from,
+not the one being merged into. To make matters worse, these comments are the
+most ephemeral part of a pull request: if the requester push --forces the pull
+request branch, to rebase or fix issues or whatever, the commit SHAs change (of
+course), and the comments on the original commits are lost (sad trombone). So
+that kinda sucks.
+
+There is currently no way to receive push notifications for events on a
+repository that you do not own. To work around this, whenever a push request
+open event is received by the web hook, an entry for the pull request will be
+added to the shared database. When the cron job runs, it uses the github API
+to get a list of all commits for the known pull requests, and all comments on
+these commits. Any new comments will be forwarded to the $GHEH_EMAIL_TO.
+
+The cron job makes uses of the ETag HTTP header to avoid retrieving data that
+has not changed since the last API call. API calls that return a 304 do not
+count against your rate limit.
+
+Bugs
+----
+
+Yes, probably. Feel free to contact me about this thing via github or email.
+Patches welcome!
