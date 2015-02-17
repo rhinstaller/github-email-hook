@@ -31,12 +31,12 @@ import time
 import pymongo
 
 from github_email_hook import get_github, handle_commit_comment
-from github_email_hook.constants import DB_NAME, PULL_REQUEST_COLLECTION
+from github_email_hook.constants import PULL_REQUEST_COLLECTION
 from github_email_hook.constants import COMMIT_COMMENT_COLLECTION, COMMENT_SENT_COLLECTION
 
 if __name__ == '__main__':
     client = pymongo.MongoClient(os.environ[os.environ["GHEH_DB_ENVVAR"]])
-    db = client[DB_NAME]
+    db = client[os.environ['GHEH_DB_NAME']]
     pull_request_coll = db[PULL_REQUEST_COLLECTION]
     commit_comment_coll = db[COMMIT_COMMENT_COLLECTION]
     comment_sent_coll = db[COMMENT_SENT_COLLECTION]

@@ -38,7 +38,7 @@ from github_email_hook import send_email, get_github, pull_request_msg_id
 from github_email_hook import handle_commit_comment
 
 from github_email_hook import patch_msg_id, email_footer
-from github_email_hook.constants import DB_NAME, PULL_REQUEST_COLLECTION
+from github_email_hook.constants import PULL_REQUEST_COLLECTION
 
 def application(environ, start_response):
     """ Entry point for mod_wsgi """
@@ -51,7 +51,8 @@ def application(environ, start_response):
             'GHEH_EMAIL_TO' not in os.environ or \
             'GHEH_EMAIL_FROM' not in os.environ or \
             'GHEH_DB_ENVVAR' not in os.environ or \
-            os.environ['GHEH_DB_ENVVAR'] not in os.environ:
+            os.environ['GHEH_DB_ENVVAR'] not in os.environ or \
+            'GHEH_DB_NAME' not in os.environ:
         print("Missing required environment variables", file=environ['wsgi.errors'])
         start_response('500 Internal Server Error', response_headers)
         return [b'Service not properly configured, please check that all mandatory environment variables are set']
@@ -232,7 +233,7 @@ def handle_pull_request(data):
         # Create (or update) a database record with the pull request and
         # the list of commits
         client = pymongo.MongoClient(os.environ[os.environ["GHEH_DB_ENVVAR"]])
-        db = client[DB_NAME]
+        db = client[os.environ['GHEH_DB_NAME']]
         pull_request_coll = db[PULL_REQUEST_COLLECTION]
 
         record = pull_request_coll.find_one({'pull_request.id': pull_request['id']})

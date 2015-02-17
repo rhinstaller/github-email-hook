@@ -25,7 +25,7 @@ import smtplib
 import pymongo
 from email.mime.text import MIMEText
 
-from github_email_hook.constants import DB_NAME, PULL_REQUEST_COLLECTION
+from github_email_hook.constants import PULL_REQUEST_COLLECTION
 
 def send_email(msg):
     """ Send a email.message object """
@@ -117,7 +117,7 @@ def handle_commit_comment(data):
 
     # Find the pull request that this commit is part of, if any
     client = pymongo.MongoClient(os.environ[os.environ["GHEH_DB_ENVVAR"]])
-    db = client[DB_NAME]
+    db = client[os.environ['GHEH_DB_NAME']]
     pull_request_coll = db[PULL_REQUEST_COLLECTION]
     record = pull_request_coll.find_one({'commit_list.sha': data['comment']['commit_id']})
 

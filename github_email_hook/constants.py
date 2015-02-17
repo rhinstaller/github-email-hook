@@ -18,7 +18,6 @@
 #
 # Author(s): David Shea <dshea@redhat.com>
 
-DB_NAME = 'github'
 PULL_REQUEST_COLLECTION = 'pull-requests'
 COMMIT_COMMENT_COLLECTION = 'commit-comments'
 COMMENT_SENT_COLLECTION = 'comment-sent'

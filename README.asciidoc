@@ -55,6 +55,8 @@ Required
 		   for OpenShift set GHEH_DB_ENVVAR to
 		   OPENSHIFT_MONGODB_DB_URL.
 
+*GHEH_DB_NAME*:: The name of the database to use.
+
 Optional
 ^^^^^^^^
 
