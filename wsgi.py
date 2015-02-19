@@ -186,7 +186,7 @@ def handle_pull_request(data):
         subject += "[%s/pulls/%s] %s" % \
                 (pull_request["base"]["repo"]["full_name"], data["number"], pull_request["title"])
 
-        from_addr = "%s <%s>" % (pull_request["user"]["login"], os.environ["GHEH_EMAIL_FROM"])
+        from_addr = "%s <%s>" % (data["sender"]["login"], os.environ["GHEH_EMAIL_FROM"])
 
         body = pull_request["body"] + email_footer(pull_request["html_url"])
 
@@ -255,7 +255,7 @@ def handle_pull_request(data):
                     (data["sender"]["login"], data["action"],
                      pull_request["base"]["repo"]["full_name"], data["number"])
 
-        from_addr = "%s <%s>" % (pull_request["user"]["login"], os.environ["GHEH_EMAIL_FROM"])
+        from_addr = "%s <%s>" % (data["sender"]["login"], os.environ["GHEH_EMAIL_FROM"])
 
         msg = MIMEText(email_footer(pull_request["html_url"]))
         msg["From"] = from_addr
