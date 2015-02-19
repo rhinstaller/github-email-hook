@@ -23,9 +23,19 @@ import requests
 import threading
 import smtplib
 import pymongo
+import iso8601
+import email.utils
 from email.mime.text import MIMEText
 
 from github_email_hook.constants import PULL_REQUEST_COLLECTION
+
+def json_to_email_date(date):
+    """ Convert a JSON (ISO 8601) date string to an email (RFC 2822) string """
+    # First, parse the string as a datetime object, and get the timestamp from that
+    ts = iso8601.parse_date(date).timestamp()
+
+    # Convert the timestamp into an email date
+    return email.utils.formatdate(timeval=ts)
 
 def send_email(msg):
     """ Send a email.message object """
@@ -149,5 +159,6 @@ def handle_commit_comment(data):
     msg['From'] = from_addr
     msg['Subject'] = subject
     msg['In-Reply-To'] = patch_msg_id(record['pull_request'], commit['sha'])
+    msg['Date'] = json_to_email_date(data["comment"]["updated_at"])
     send_email(msg)
 

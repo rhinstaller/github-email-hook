@@ -33,7 +33,7 @@ import pymongo
 
 from email.mime.text import MIMEText
 
-from github_email_hook import send_email, get_github, pull_request_msg_id
+from github_email_hook import send_email, get_github, pull_request_msg_id, json_to_email_date
 # The commit_comment handler is shared with the cron job
 from github_email_hook import handle_commit_comment
 
@@ -194,6 +194,7 @@ def handle_pull_request(data):
         cover_letter['From'] = from_addr
         cover_letter['Subject'] = subject
         cover_letter['Message-Id'] = cover_msg_id
+        cover_letter['Date'] = json_to_email_date(pull_request['updated_at'])
         send_email(cover_letter)
 
         # Get a list of commits in this pull request
@@ -261,6 +262,7 @@ def handle_pull_request(data):
         msg["From"] = from_addr
         msg["Subject"] = subject
         msg["In-Reply-To"] = cover_msg_id
+        msg["Date"] = json_to_email_date(pull_request["updated_at"])
         send_email(msg)
 
 def handle_issue_comment(data):
@@ -296,6 +298,7 @@ def handle_issue_comment(data):
     msg['From'] = from_addr
     msg['Subject'] = subject
     msg['In-Reply-To'] = cover_msg_id
+    msg['Date'] = json_to_email_date(data["issue"]["updated_at"])
     send_email(msg)
 
 def handle_pull_request_review_comment(data):
@@ -329,6 +332,7 @@ def handle_pull_request_review_comment(data):
     msg['From'] = from_addr
     msg['Subject'] = subject
     msg['In-Reply-To'] = cover_msg_id
+    msg['Date'] = json_to_email_date(data["comment"]["updated_at"])
     send_email(msg)
 
 
