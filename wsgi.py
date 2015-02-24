@@ -212,11 +212,15 @@ def handle_pull_request(data):
 
             msg['Message-Id'] = patch_msg_id(pull_request, commit["sha"])
 
-            # Prepend a From: to the body of the message in case the mail
-            # server messes with the headers. Add the footer.
+            # Prepend a From: to the body of the message so git-am works right.
+            # Add the footer.
             msg.set_payload('From: %s\n\n%s\n%s' % \
                     (msg['From'], msg.get_payload(),
                         email_footer(commit['html_url'], msg_type='commit')))
+
+            # Replace the From header with ourselves
+            del msg['From']
+            msg['From'] = from_addr
 
             # Reset the Content-Transfer-Encoding so that non-ascii characters
             # get encoded right. This will encode the payload as base64.
