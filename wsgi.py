@@ -212,6 +212,13 @@ def handle_pull_request(data):
 
             msg['Message-Id'] = patch_msg_id(pull_request, commit["sha"])
 
+            # Reset the Date header so that patches aren't coming from a time
+            # before the message they're supposed to be replying to.
+            # git-send-email does something similar, so everyone seems pretty
+            # ok with this, as a concept.
+            del msg['Date']
+            msg['Date'] = json_to_email_date(pull_request['updated_at'])
+
             # Prepend a From: to the body of the message so git-am works right.
             # Add the footer.
             msg.set_payload('From: %s\n\n%s\n%s' % \
