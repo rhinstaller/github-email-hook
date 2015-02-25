@@ -96,14 +96,14 @@ def pull_request_msg_id(pull_request):
         pull-request.<id>.<head.sha>@<base.ref>.<base.id>
     """
 
-    return "pull-request.%s.%s@%s.%s" % \
+    return "<pull-request.%s.%s@%s.%s>" % \
             (pull_request["id"], pull_request["head"]["sha"],
              pull_request["base"]["ref"], pull_request["base"]["repo"]["id"])
 
 def patch_msg_id(pull_request, patch_sha):
     """ Generate a message ID for a patch within a pull request. """
 
-    return "patch.%s.%s.%s@%s.%s" % \
+    return "<patch.%s.%s.%s@%s.%s>" % \
             (pull_request["id"], pull_request["head"]["sha"], patch_sha,
              pull_request["base"]["ref"], pull_request["base"]["repo"]["id"])
 
