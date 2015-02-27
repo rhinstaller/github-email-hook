@@ -140,8 +140,9 @@ def handle_commit_comment(data):
     commit = [c for c in record['commit_list'] if c['sha'] == data['comment']['commit_id']][0]
 
     # Re-create the patch subject
-    subject = "Re: [PATCH %d/%d] %s" % \
-            (record['commit_list'].index(commit) + 1, len(record['commit_list']),
+    subject = "Re: [%s %d/%d] %s" % \
+            (record['pull_request']['base']['ref'],
+             record['commit_list'].index(commit) + 1, len(record['commit_list']),
              commit['commit']['message'].split('\n')[0])
 
     from_addr = "%s <%s>" % (data["comment"]["user"]["login"], os.environ["GHEH_EMAIL_FROM"])

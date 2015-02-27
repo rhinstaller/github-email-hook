@@ -183,8 +183,9 @@ def handle_pull_request(data):
         else:
             subject = "Updated: "
 
-        subject += "[%s/pulls/%s] %s" % \
-                (pull_request["base"]["repo"]["full_name"], data["number"], pull_request["title"])
+        subject += "[%s/pulls/%s %s] %s" % \
+                (pull_request["base"]["repo"]["full_name"], data["number"],
+                        pull_request["base"]["ref"], pull_request["title"])
 
         from_addr = "%s <%s>" % (data["sender"]["login"], os.environ["GHEH_EMAIL_FROM"])
 
@@ -234,8 +235,9 @@ def handle_pull_request(data):
             del msg['Content-Transfer-Encoding']
             msg.set_charset('utf-8')
 
-            # Monkey with the subject to get the patch numbers in there
-            subject = msg['Subject'].replace('[PATCH]', '[PATCH %d/%d]' % (patch_num, tot_num), 1)
+            # Monkey with the subject to get the patch numbers and branch name in there
+            subject = msg['Subject'].replace('[PATCH]',
+                    '[%s %d/%d]' % (pull_request["base"]["ref"], patch_num, tot_num), 1)
             del msg['Subject']
             msg['Subject'] = subject
             send_email(msg)
