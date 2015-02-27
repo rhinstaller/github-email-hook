@@ -107,6 +107,13 @@ def patch_msg_id(pull_request, patch_sha):
             (pull_request["id"], pull_request["head"]["sha"], patch_sha,
              pull_request["base"]["ref"], pull_request["base"]["repo"]["id"])
 
+def pull_request_subject(pull_request):
+    """ Generate a subject line for a pull request. """
+
+    return "[%s/pulls/%s %s] %s" % \
+            (pull_request["base"]["repo"]["full_name"], pull_request["number"],
+                    pull_request["base"]["ref"], pull_request["title"])
+
 def email_footer(url, msg_type="pull request"):
     """ Return a footer with a link to the pull request.
 

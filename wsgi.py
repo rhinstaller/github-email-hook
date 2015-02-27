@@ -34,6 +34,7 @@ import pymongo
 from email.mime.text import MIMEText
 
 from github_email_hook import send_email, get_github, pull_request_msg_id, json_to_email_date
+from github_email_hook import pull_request_subject
 # The commit_comment handler is shared with the cron job
 from github_email_hook import handle_commit_comment
 
@@ -177,15 +178,15 @@ def handle_pull_request(data):
     # sending or replying to
     cover_msg_id = pull_request_msg_id(data["pull_request"])
 
+    subject_base = pull_request_subject(pull_request)
+
     if data["action"] in ("opened", "synchronize"):
         if data["action"] == "opened":
             subject = "New: "
         else:
             subject = "Updated: "
 
-        subject += "[%s/pulls/%s %s] %s" % \
-                (pull_request["base"]["repo"]["full_name"], data["number"],
-                        pull_request["base"]["ref"], pull_request["title"])
+        subject += subject_base
 
         from_addr = "%s <%s>" % (data["sender"]["login"], os.environ["GHEH_EMAIL_FROM"])
 
@@ -259,19 +260,17 @@ def handle_pull_request(data):
             pull_request_coll.insert({'pull_request': pull_request, 'commit_list': commit_list})
 
     elif data["action"] in ("closed", "reopened", "assigned", "unassigned"):
+        subject = "Re: %s (%s)" % (subject_base, data["action"])
+
+        # If the action was assigned, say whom it was assigned to in the body
         if data["action"] == "assigned":
-            subject = "User %s has assigned %s/pulls/%s to %s" % \
-                    (data["sender"]["login"],
-                     pull_request["base"]["repo"]["full_name"], data["number"],
-                     data["assignee"]["login"])
+            body = "Assigned to %s" % data["assignee"]["login"]
         else:
-            subject = "User %s has %s %s/pulls/%s" % \
-                    (data["sender"]["login"], data["action"],
-                     pull_request["base"]["repo"]["full_name"], data["number"])
+            body = ""
 
         from_addr = "%s <%s>" % (data["sender"]["login"], os.environ["GHEH_EMAIL_FROM"])
 
-        msg = MIMEText(email_footer(pull_request["html_url"]))
+        msg = MIMEText(body + email_footer(pull_request["html_url"]))
         msg["From"] = from_addr
         msg["Subject"] = subject
         msg["In-Reply-To"] = cover_msg_id
@@ -298,13 +297,8 @@ def handle_issue_comment(data):
     pull_request = get_github(data["issue"]["pull_request"]["url"]).json()
     cover_msg_id = pull_request_msg_id(pull_request)
 
-    subject = "User %s commented on %s/pulls/%s" % \
-            (data["comment"]["user"]["login"],
-             data["repository"]["full_name"],
-             pull_request["number"])
-
+    subject = "Re: " + pull_request_subject(pull_request)
     from_addr = "%s <%s>" % (data["comment"]["user"]["login"], os.environ["GHEH_EMAIL_FROM"])
-
     body = data["comment"]["body"] + email_footer(data["issue"]["html_url"])
 
     msg = MIMEText(body)
@@ -329,11 +323,7 @@ def handle_pull_request_review_comment(data):
 
     cover_msg_id = pull_request_msg_id(data["pull_request"])
     
-    subject = "User %s commented on the diff for %s/pulls/%s" % \
-            (data["comment"]["user"]["login"],
-             data["repository"]["full_name"],
-             data["pull_request"]["number"])
-
+    subject = "Re: " + pull_request_subject(data["pull_request"])
     from_addr = "%s <%s>" % (data["comment"]["user"]["login"], os.environ["GHEH_EMAIL_FROM"])
 
     # Start with the diff being commented on as a quote
