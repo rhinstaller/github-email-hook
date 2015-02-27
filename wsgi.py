@@ -31,6 +31,9 @@ import hashlib
 import email.parser
 import pymongo
 
+import iso8601
+import email.utils
+
 from email.mime.text import MIMEText
 
 from github_email_hook import send_email, get_github, pull_request_msg_id, json_to_email_date
@@ -204,6 +207,13 @@ def handle_pull_request(data):
         patch_num = 1
         tot_num = len(commit_list)
 
+        # Start with the PR date for the patches and add one second to each
+        # as we go so that the patches appear in the right order.
+        # This is the same thing that git-send-email does, both in terms of
+        # throwing away the commit Date and using incrementing seconds to
+        # order the patch emails.
+        patch_date_ts = iso8601.parse_date(pull_request['updated_at']).timestamp()
+
         for commit in commit_list:
             # Start with the .patch file provided by github since it's
             # formatted all nice and email-like
@@ -214,12 +224,8 @@ def handle_pull_request(data):
 
             msg['Message-Id'] = patch_msg_id(pull_request, commit["sha"])
 
-            # Reset the Date header so that patches aren't coming from a time
-            # before the message they're supposed to be replying to.
-            # git-send-email does something similar, so everyone seems pretty
-            # ok with this, as a concept.
             del msg['Date']
-            msg['Date'] = json_to_email_date(pull_request['updated_at'])
+            msg['Date'] = email.utils.formatdate(timeval=patch_date_ts)
 
             # Prepend a From: to the body of the message so git-am works right.
             # Add the footer.
@@ -243,6 +249,7 @@ def handle_pull_request(data):
             msg['Subject'] = subject
             send_email(msg)
 
+            patch_date_ts += 1
             patch_num += 1
 
         # Create (or update) a database record with the pull request and
