@@ -266,14 +266,21 @@ def handle_pull_request(data):
         else:
             pull_request_coll.insert({'pull_request': pull_request, 'commit_list': commit_list})
 
-    elif data["action"] in ("closed", "reopened", "assigned", "unassigned"):
-        subject = "Re: %s (%s)" % (subject_base, data["action"])
+    elif data["action"] in ("closed", "reopened", "assigned", "unassigned", "labeled", "unlabeled"):
+        subject = "Re: %s" % subject_base
 
         # If the action was assigned, say whom it was assigned to in the body
         if data["action"] == "assigned":
             body = "Assigned to %s" % data["assignee"]["login"]
+        # For labels, put the label in the body
+        elif data["action"] == "labeled":
+            body = "Added label: %s." % data["label"]["name"]
+        elif data["action"] == "unlabeled":
+            body = "Removed label: %s." % data["label"]["name"]
+        # For everything else just say what happened
+        # uppercase the first letter
         else:
-            body = ""
+            body = "%s." % data["action"].title()
 
         from_addr = "%s <%s>" % (data["sender"]["login"], os.environ["GHEH_EMAIL_FROM"])
 
